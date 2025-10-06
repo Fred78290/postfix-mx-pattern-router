@@ -318,7 +318,7 @@ def main():
     patterns = load_patterns(args.config)
     if not patterns:
         log(f"Warning: No patterns loaded from {args.config}\n", True)
-        sys.exit(1)
+        #sys.exit(1)
 
     # Create socket server
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
