@@ -248,7 +248,7 @@ def process_request(request, conn, patterns, cache_ttl):
         send_response(conn, 200, matched)
         log(f"Match found ({cache_status}): {domain} → {matched}\n")
     elif args.smtp_relay:
-        send_response(conn, 200, f"relay:{args.smtp_relay}")
+        send_response(conn, 200, f"{args.smtp_relay}")
         log(f"No match ({cache_status}), using default relay: {domain} → {args.smtp_relay}\n", False, True)
     else:
         send_response(conn, 500, 'NO RESULT')
