@@ -90,7 +90,13 @@ Description=Postfix MX Pattern Router Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/postfix-mx-pattern-router/postfix-mx-pattern-router.py -c /etc/postfix/postfix-mx-pattern-router.conf -p 10099 --cache-ttl 3600
+Environment=ROUTER_CONFIG=/etc/postfix/postfix-mx-pattern-router.conf
+Environment=ROUTER_PORT=10099
+Environment=ROUTER_CACHE_TTL=3600
+Environment=ROUTER_SMTP_RELAY=relay:[gmail-smtp-in.l.google.com]:587
+Environment=ROUTER_SMTP_PORT=587
+EnvironmentFile=-/etc/default/postfix-mx-pattern-router
+ExecStart=/usr/local/bin/postfix-mx-pattern-router -c $ROUTER_CONFIG -p $ROUTER_PORT --cache-ttl $ROUTER_CACHE_TTL --smtp-relay $ROUTER_SMTP_RELAY --smtp-port $ROUTER_SMTP_PORT
 Restart=on-failure
 User=postfix-mx-pattern-router
 Group=postfix-mx-pattern-router
