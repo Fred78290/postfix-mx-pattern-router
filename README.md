@@ -96,7 +96,7 @@ Environment=ROUTER_CACHE_TTL=3600
 Environment=ROUTER_SMTP_RELAY=relay:[gmail-smtp-in.l.google.com]:587
 Environment=ROUTER_SMTP_PORT=587
 EnvironmentFile=-/etc/default/postfix-mx-pattern-router
-ExecStart=/usr/local/bin/postfix-mx-pattern-router -c $ROUTER_CONFIG -p $ROUTER_PORT --cache-ttl $ROUTER_CACHE_TTL --smtp-relay $ROUTER_SMTP_RELAY --smtp-port $ROUTER_SMTP_PORT
+ExecStart=/usr/local/bin/postfix-mx-pattern-router.py -c $ROUTER_CONFIG -p $ROUTER_PORT --cache-ttl $ROUTER_CACHE_TTL --smtp-relay $ROUTER_SMTP_RELAY --smtp-port $ROUTER_SMTP_PORT
 Restart=on-failure
 User=postfix-mx-pattern-router
 Group=postfix-mx-pattern-router
