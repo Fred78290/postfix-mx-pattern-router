@@ -60,6 +60,8 @@ DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PATTERN_FILE = '/etc/postfix/postfix-mx-pattern-router.conf'
 DEFAULT_CACHE_TTL = 3600
 DEFAULT_CLIENT_TIMEOUT = 600
+DEFAULT_SMTP_RELAY = 'relay:[gmail-smtp-in.l.google.com]:587'
+DEFAULT_SMTP_PORT = 587
 GC_INTERVAL = 3600
 STATS_INTERVAL = 300
 
@@ -82,6 +84,13 @@ def parse_arguments():
                         type=int,
                         default=DEFAULT_PORT,
                         help=f'Port to listen on (default: {DEFAULT_PORT})')
+    parser.add_argument('--smtp-relay',
+                        default=DEFAULT_SMTP_RELAY,
+                        help=f'SMTP relay to use if not found (default: {DEFAULT_SMTP_RELAY})')
+    parser.add_argument('--smtp-port',
+                        type=int,
+                        default=DEFAULT_SMTP_PORT,
+                        help=f'SMTP port to use for found mx records (default: {DEFAULT_SMTP_PORT})')
     parser.add_argument('-H', '--host',
                         default=DEFAULT_HOST,
                         help=f'Host to bind to (default: {DEFAULT_HOST})')
@@ -220,6 +229,9 @@ def process_request(request, conn, patterns, cache_ttl):
             mx_records, from_cache = get_mx_records(domain, cache_ttl)
 
             for mx in mx_records:
+                if len(patterns) == 0:
+                    matched = f'relay:[{mx}]:{args.smtp_port}'  # Default relay if no patterns are defined
+                    break
                 for pattern, relay in patterns.items():
                     if pattern in mx:
                         matched = relay
@@ -227,11 +239,17 @@ def process_request(request, conn, patterns, cache_ttl):
                 if matched:
                     break
 
+            if not matched and len(mx_records) > 0:
+                matched = f'relay:[{mx_records[0]}]:{args.smtp_port}'  # Default relay if no patterns are defined
+
     cache_status = "cache hit" if from_cache else "dns lookup"
 
     if matched:
         send_response(conn, 200, matched)
         log(f"Match found ({cache_status}): {domain} → {matched}\n")
+    elif args.smtp_relay:
+        send_response(conn, 200, f"relay:{args.smtp_relay}")
+        log(f"No match ({cache_status}), using default relay: {domain} → {args.smtp_relay}\n", False, True)
     else:
         send_response(conn, 500, 'NO RESULT')
         log(f"No match ({cache_status}): {domain}\n", False, True)
@@ -310,9 +328,9 @@ def main():
         server.bind((args.host, args.port))
         server.listen(5)
         if args.cache_ttl > 0:
-            log(f"Socketmap server listening on {args.host}:{args.port} (cache {args.cache_ttl} seconds)\n")
+            log(f"Socketmap server listening on {args.host}:{args.port} (cache {args.cache_ttl} seconds). smtp_relay={args.smtp_relay}, smtp_port={args.smtp_port}\n")
         else:
-            log(f"Socketmap server listening on {args.host}:{args.port} (no cache)\n")
+            log(f"Socketmap server listening on {args.host}:{args.port} (no cache). smtp_relay={args.smtp_relay}, smtp_port={args.smtp_port}\n")
 
         # Print patterns dictionary in a readable format
         log(f"Loaded {(len(patterns))} patterns:\n", False, True)
